@@ -503,7 +503,7 @@ if test x"$with_readline" != xno; then
 	if test "x$with_readline_lib" = xauto; then
 		save_LIBS="$LIBS"
 		LIBS=""
-		AC_SEARCH_LIBS(tgetent, [readline ncurses curses termcap], [term_LIBS="$LIBS"], [term_LIBS=""])
+		AC_SEARCH_LIBS(tgetent, [readline ncurses tinfo curses termcap], [term_LIBS="$LIBS"], [term_LIBS=""])
 		AC_CHECK_LIB([readline], [readline], [TARGET_READLINE_LIBS="-lreadline"], [found="no"])
 		TARGET_READLINE_LIBS="$TARGET_READLINE_LIBS $term_LIBS"
 		LIBS="$save_LIBS"
@@ -519,7 +519,7 @@ if test x"$with_readline" != xno; then
 		AC_CHECK_HEADER(readline.h, [found="yes"], [
 			found="no"
 			if test "$cross_compiling" != yes; then
-				for dir in /usr /usr/local /usr/local/readline /usr/contrib /mingw; do
+				for dir in /@unixroot/usr /usr /usr/local /usr/local/readline /usr/contrib /mingw; do
 					for subdir in include include/readline; do
 						AC_CHECK_FILE($dir/$subdir/readline.h, found=yes)
 						if test "$found" = "yes"; then
@@ -569,7 +569,7 @@ AC_SUBST(TARGET_DEBUG)
 # See whether we should use the amalgamation to build
 AC_ARG_ENABLE(amalgamation, AC_HELP_STRING([--disable-amalgamation],
       [Disable the amalgamation and instead build all files separately]))
-if test "${enable_amalgamation}" == "no" ; then
+if test "${enable_amalgamation}" = "no" ; then
   USE_AMALGAMATION=0
 fi
 AC_SUBST(USE_AMALGAMATION)
