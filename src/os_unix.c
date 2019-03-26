@@ -44,7 +44,7 @@
 **      plus implementations of sqlite3_os_init() and sqlite3_os_end().
 */
 #include "sqliteInt.h"
-#if SQLITE_OS_UNIX              /* This file is used on unix only */
+#if SQLITE_OS_UNIX || SQLITE_OS_OS2   /* This file is used on unix only */
 
 /*
 ** There are various methods for file locking used for concurrency
