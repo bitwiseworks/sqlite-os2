@@ -160,6 +160,11 @@ VERSION_NUMBER=[`cat $srcdir/VERSION \
                 | awk '{printf "%d%03d%03d",$1,$2,$3}'`]
 AC_MSG_NOTICE(Version number set to $VERSION_NUMBER)
 AC_SUBST(VERSION_NUMBER)
+PATCH_LEVEL=[`cat $srcdir/VERSION \
+                           | sed 's/[^0-9]/ /g' \
+                | awk '{printf "%d",$3}'`]
+AC_MSG_NOTICE(Patch level set to $PATCH_LEVEL)
+AC_SUBST(PATCH_LEVEL)
 
 #########
 # Locate a compiler for the build machine.  This compiler should

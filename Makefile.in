@@ -11,6 +11,9 @@
 # be able to get it to work by giving it some hints.  See the comment
 # at the beginning of configure.in for additional information.
 #
+VENDOR ?=community
+BUILD_INFO=\#\#1\#\# $(shell date +'%d %b %Y %H:%M:%S')     $(shell uname -n)
+BUILDLEVEL_INFO=@\#$(VENDOR):$(RELEASE)\#@$(BUILD_INFO)::::$(PATCH_LEVEL)::
 
 # The toplevel directory of the source tree.  This is the directory
 # that contains this "Makefile.in" and the "configure.in" script.
@@ -98,6 +101,7 @@ TCC += @HAVE_ZLIB@
 VERSION = @VERSION@
 VERSION_NUMBER = @VERSION_NUMBER@
 RELEASE = @RELEASE@
+PATCH_LEVEL = @PATCH_LEVEL@
 
 # Filename extensions
 #
@@ -635,6 +639,7 @@ sqlite3.pc: $(TOP)/sqlite3.pc.in
 
 libsqlite3.la:	$(LIBOBJ)
 	$(LTLINK) -no-undefined -o $@ $(LIBOBJ) $(TLIBS) \
+		-buildlevel '$(BUILDLEVEL_INFO)' \
 		${ALLOWRELEASE} -rpath "$(libdir)" -version-info "8:6:8"
 
 libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
@@ -642,6 +647,7 @@ libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
 		libsqlite3.la @TCL_STUB_LIB_SPEC@ $(TLIBS) \
 		-rpath "$(TCLLIBDIR)" \
 		-version-info "8:6:8" \
+		-buildlevel '$(BUILDLEVEL_INFO)' \
 		-avoid-version
 
 sqlite3$(TEXE):	shell.c sqlite3.c
