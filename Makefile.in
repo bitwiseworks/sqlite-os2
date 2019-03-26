@@ -650,9 +650,9 @@ libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
 		-buildlevel '$(BUILDLEVEL_INFO)' \
 		-avoid-version
 
-sqlite3$(TEXE):	shell.c sqlite3.c
+sqlite3$(TEXE):	shell.c sqlite3.c getrusage.lo
 	$(LTLINK) $(READLINE_FLAGS) $(SHELL_OPT) -o $@ \
-		shell.c sqlite3.c \
+		shell.c sqlite3.c getrusage.lo \
 		$(LIBREADLINE) $(TLIBS) -rpath "$(libdir)"
 
 sqldiff$(TEXE):	$(TOP)/tool/sqldiff.c sqlite3.lo sqlite3.h
@@ -931,6 +931,9 @@ os.lo:	$(TOP)/src/os.c $(HDR)
 
 os_unix.lo:	$(TOP)/src/os_unix.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/os_unix.c
+
+getrusage.lo:	$(TOP)/src/getrusage.c $(HDR)
+	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/getrusage.c
 
 os_win.lo:	$(TOP)/src/os_win.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/os_win.c
