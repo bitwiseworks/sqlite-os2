@@ -520,11 +520,7 @@ static int sqlite3LoadExtension(
     return SQLITE_ERROR;
   }
 
-#ifdef __OS2__
-  zEntry = sqlite3_mprintf("_%s", zProc ? zProc : "sqlite3_extension_init");
-#else
   zEntry = zProc ? zProc : "sqlite3_extension_init";
-#endif
 
   handle = sqlite3OsDlOpen(pVfs, zFile);
 #if SQLITE_OS_UNIX || SQLITE_OS_WIN || SQLITE_OS_OS2
@@ -567,11 +563,7 @@ static int sqlite3LoadExtension(
       sqlite3OsDlClose(pVfs, handle);
       return SQLITE_NOMEM_BKPT;
     }
-#ifdef __OS2__
-    memcpy(zAltEntry, "_sqlite3_", 9);
-#else
     memcpy(zAltEntry, "sqlite3_", 8);
-#endif
     for(iFile=ncFile-1; iFile>=0 && zFile[iFile]!='/'; iFile--){}
     iFile++;
     if( sqlite3_strnicmp(zFile+iFile, "lib", 3)==0 ) iFile += 3;

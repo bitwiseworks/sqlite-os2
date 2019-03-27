@@ -6403,10 +6403,22 @@ static void (*unixDlSym(sqlite3_vfs *NotUsed, void *p, const char*zSym))(void){
   ** other hand, dlsym() will not work on such a system either, so we have
   ** not really lost anything.
   */
+#ifdef __OS2__
+  UNUSED_PARAMETER(NotUsed);
+  void *func;
+  func = dlsym(p, zSym);
+  if (func == NULL) {
+    char *zSymbolU = sqlite3_mprintf("_%s", zSym);
+    func = dlsym(p, zSymbolU);
+    sqlite3_free(zSymbolU);
+  }
+  return func;
+#else
   void (*(*x)(void*,const char*))(void);
   UNUSED_PARAMETER(NotUsed);
   x = (void(*(*)(void*,const char*))(void))dlsym;
   return (*x)(p, zSym);
+#endif
 }
 static void unixDlClose(sqlite3_vfs *NotUsed, void *pHandle){
   UNUSED_PARAMETER(NotUsed);
