@@ -639,7 +639,7 @@ sqlite3.pc: $(TOP)/sqlite3.pc.in
 
 libsqlite3.la:	$(LIBOBJ)
 	$(LTLINK) -no-undefined -o $@ $(LIBOBJ) $(TLIBS) \
-		-buildlevel '$(BUILDLEVEL_INFO)' \
+		-buildlevel '$(BUILDLEVEL_INFO)' -shortname sqlit3 \
 		${ALLOWRELEASE} -rpath "$(libdir)" -version-info "8:6:8"
 
 libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
