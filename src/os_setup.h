@@ -63,4 +63,12 @@
 #  endif
 #endif
 
+#ifdef SQLITE_OS_OS2
+# define ISSLASH(C) ((C) == '/' || (C) == '\\')
+# define HAS_DEVICE(P) \
+    ((((P)[0] >= 'A' && (P)[0] <= 'Z') || ((P)[0] >= 'a' && (P)[0] <= 'z')) \
+     && (P)[1] == ':')
+# define IS_ABSOLUTE_PATH(P) (ISSLASH ((P)[0]) || HAS_DEVICE (P))
+#endif /* SQLITE_OS_OS2 */
+
 #endif /* SQLITE_OS_SETUP_H */

@@ -5656,9 +5656,13 @@ static const char *unixTempFileDir(void){
   static const char *azDirs[] = {
      0,
      0,
+#ifdef SQLITE_OS_OS2
+     "/@unixroot/var/tmp",
+#else
      "/var/tmp",
      "/usr/tmp",
      "/tmp",
+#endif
      "."
   };
   unsigned int i = 0;
@@ -6247,7 +6251,11 @@ static int mkFullPathname(
 ){
   int nPath = sqlite3Strlen30(zPath);
   int iOff = 0;
+#ifdef SQLITE_OS_OS2
+  if( !IS_ABSOLUTE_PATH(zPath) ){
+#else
   if( zPath[0]!='/' ){
+#endif
     if( osGetcwd(zOut, nOut-2)==0 ){
       return unixLogError(SQLITE_CANTOPEN_BKPT, "getcwd", zPath);
     }
@@ -6403,7 +6411,7 @@ static void (*unixDlSym(sqlite3_vfs *NotUsed, void *p, const char*zSym))(void){
   ** other hand, dlsym() will not work on such a system either, so we have
   ** not really lost anything.
   */
-#ifdef __OS2__
+#ifdef SQLITE_OS_OS2
   UNUSED_PARAMETER(NotUsed);
   void *func;
   func = dlsym(p, zSym);
@@ -6778,7 +6786,11 @@ static int proxyGetLockPath(const char *dbPath, char *lPath, size_t maxLen){
     len = strlcat(lPath, "sqliteplocks", maxLen);    
   }
 # else
+# ifdef SQLITE_OS_OS2
+  len = strlcpy(lPath, "/@unixroot/var/tmp/", maxLen);
+# else
   len = strlcpy(lPath, "/tmp/", maxLen);
+# endif
 # endif
 #endif
 
