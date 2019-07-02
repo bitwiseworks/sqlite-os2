@@ -98,6 +98,9 @@
 #if !defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0
 # include <sys/mman.h>
 #endif
+#if defined(SQLITE_OS_OS2)
+# include <ctype.h>
+#endif
 
 #if SQLITE_ENABLE_LOCKING_STYLE
 # include <sys/ioctl.h>
@@ -6153,7 +6156,10 @@ static int unixOpen(
   }
 #endif
   
-  assert( zPath==0 || zPath[0]=='/' 
+  assert( zPath==0 || zPath[0]=='/'
+#if defined(SQLITE_OS_OS2)
+      || (isalpha(zPath[0]) && zPath[1]==':')
+#endif
       || eType==SQLITE_OPEN_MASTER_JOURNAL || eType==SQLITE_OPEN_MAIN_JOURNAL 
   );
   rc = fillInUnixFile(pVfs, fd, pFile, zPath, ctrlFlags);
