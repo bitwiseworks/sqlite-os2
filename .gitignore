@@ -1,9 +1,11 @@
 # ignore regenerated files from autoreconf -fvi
 aclocal.m4
 config.h.in
+sqlite_cfg.h.in
 configure
 ltmain.sh
 
 # ignore new files from autoreconf -fvi
 autom4te.cache/
 config.h.in~
+sqlite_cfg.h.in~

@@ -13,7 +13,7 @@
 source [file join [file dirname [info script]] fts5_common.tcl]
 set testprefix fts5eb
 
-# If SQLITE_ENABLE_FTS5 is defined, omit this file.
+# If SQLITE_ENABLE_FTS5 is not defined, omit this file.
 ifcapable !fts5 {
   finish_test
   return
@@ -59,25 +59,45 @@ do_catchsql_test 2.1 {
   SELECT fts5_expr()
 } {1 {wrong number of arguments to function fts5_expr}}
 
-do_catchsql_test 2.1 {
+do_catchsql_test 2.2 {
   SELECT fts5_expr_tcl()
 } {1 {wrong number of arguments to function fts5_expr_tcl}}
 
+do_catchsql_test 2.3 {
+  SELECT fts5_expr('')
+} {1 {fts5: syntax error near ""}}
+
+do_catchsql_test 2.4 {
+  SELECT fts5_expr(NULL)
+} {1 {fts5: syntax error near ""}}
+
+do_catchsql_test 2.5 {
+  SELECT fts5_expr(NULL, NULL)
+} {1 {parse error in ""}}
+
+for {set i 0} {$i < 255} {incr i} {
+  do_test 2.6.$i {
+    lindex [catchsql {sELECT fts5_expr(NULL, char($i));}] 0
+  } 1
+}
 
 do_execsql_test 3.0 {
   CREATE VIRTUAL TABLE e1 USING fts5(text, tokenize = 'porter unicode61');
-  INSERT INTO e1 VALUES ("just a few words with a / inside");
+  INSERT INTO e1 VALUES ('just a few words with a / inside');
 }
 do_execsql_test 3.1 {
-  SELECT rowid, bm25(e1) FROM e1 WHERE e1 MATCH '"just"' ORDER BY rank;
+  SELECT rowid, format('%g',bm25(e1)) FROM e1 WHERE e1 MATCH '"just"' ORDER BY rank;
 } {1 -1e-06}
 do_execsql_test 3.2 {
   SELECT rowid FROM e1 WHERE e1 MATCH '"/" OR "just"'
 } 1
 do_execsql_test 3.3 {
-  SELECT rowid, bm25(e1) FROM e1 WHERE e1 MATCH '"/" OR "just"' ORDER BY rank;
+  SELECT rowid, format('%g',bm25(e1)) FROM e1 WHERE e1 MATCH '"/" OR "just"' ORDER BY rank;
 } {1 -1e-06}
 
+do_execsql_test 3.4 "
+  SELECT fts5_expr_tcl('e AND \" \"');
+" {{AND [nearset -- {e}] [{}]}}
 
 
 finish_test

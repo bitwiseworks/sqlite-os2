@@ -18,11 +18,7 @@
 ** easier and safer to build our own mechanism.
 */
 #include "sqliteInt.h"
-#if defined(INCLUDE_SQLITE_TCL_H)
-#  include "sqlite_tcl.h"
-#else
-#  include "tcl.h"
-#endif
+#include "tclsqlite.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -155,7 +151,8 @@ static int SQLITE_TCLAPI hexio_write(
   Tcl_Obj *CONST objv[]
 ){
   int offset;
-  int nIn, nOut, written;
+  Tcl_Size nIn;
+  int nOut, written;
   const char *zFile;
   const unsigned char *zIn;
   unsigned char *aOut;
@@ -168,11 +165,11 @@ static int SQLITE_TCLAPI hexio_write(
   if( Tcl_GetIntFromObj(interp, objv[2], &offset) ) return TCL_ERROR;
   zFile = Tcl_GetString(objv[1]);
   zIn = (const unsigned char *)Tcl_GetStringFromObj(objv[3], &nIn);
-  aOut = sqlite3_malloc( nIn/2 );
+  aOut = sqlite3_malloc64( 1 + nIn/2 );
   if( aOut==0 ){
     return TCL_ERROR;
   }
-  nOut = sqlite3TestHexToBin(zIn, nIn, aOut);
+  nOut = sqlite3TestHexToBin(zIn, (int)nIn, aOut);
   out = fopen(zFile, "r+b");
   if( out==0 ){
     out = fopen(zFile, "r+");
@@ -203,7 +200,8 @@ static int SQLITE_TCLAPI hexio_get_int(
   Tcl_Obj *CONST objv[]
 ){
   int val;
-  int nIn, nOut;
+  Tcl_Size nIn;
+  int nOut;
   const unsigned char *zIn;
   unsigned char *aOut;
   unsigned char aNum[4];
@@ -213,11 +211,11 @@ static int SQLITE_TCLAPI hexio_get_int(
     return TCL_ERROR;
   }
   zIn = (const unsigned char *)Tcl_GetStringFromObj(objv[1], &nIn);
-  aOut = sqlite3_malloc( nIn/2 );
+  aOut = sqlite3_malloc64( 1 + nIn/2 );
   if( aOut==0 ){
     return TCL_ERROR;
   }
-  nOut = sqlite3TestHexToBin(zIn, nIn, aOut);
+  nOut = sqlite3TestHexToBin(zIn, (int)nIn, aOut);
   if( nOut>=4 ){
     memcpy(aNum, aOut, 4);
   }else{
@@ -300,7 +298,7 @@ static int SQLITE_TCLAPI utf8_to_utf8(
   Tcl_Obj *CONST objv[]
 ){
 #ifdef SQLITE_DEBUG
-  int n;
+  Tcl_Size n;
   int nOut;
   const unsigned char *zOrig;
   unsigned char *z;
@@ -309,8 +307,8 @@ static int SQLITE_TCLAPI utf8_to_utf8(
     return TCL_ERROR;
   }
   zOrig = (unsigned char *)Tcl_GetStringFromObj(objv[1], &n);
-  z = sqlite3_malloc( n+3 );
-  n = sqlite3TestHexToBin(zOrig, n, z);
+  z = sqlite3_malloc64( n+4 );
+  n = sqlite3TestHexToBin(zOrig, (int)n, z);
   z[n] = 0;
   nOut = sqlite3Utf8To8(z);
   sqlite3TestBinToHex(z,nOut);
@@ -337,6 +335,17 @@ static int getFts3Varint(const char *p, sqlite_int64 *v){
   return (int) (q - (unsigned char *)p);
 }
 
+static int putFts3Varint(char *p, sqlite_int64 v){
+  unsigned char *q = (unsigned char *) p;
+  sqlite_uint64 vu = v;
+  do{
+    *q++ = (unsigned char) ((vu & 0x7f) | 0x80);
+    vu >>= 7;
+  }while( vu!=0 );
+  q[-1] &= 0x7f;  /* turn off high bit in final byte */
+  assert( q - (unsigned char *)p <= 10 );
+  return (int) (q - (unsigned char *)p);
+}
 
 /*
 ** USAGE:  read_fts3varint BLOB VARNAME
@@ -350,7 +359,7 @@ static int SQLITE_TCLAPI read_fts3varint(
   int objc,
   Tcl_Obj *CONST objv[]
 ){
-  int nBlob;
+  Tcl_Size nBlob;
   unsigned char *zBlob;
   sqlite3_int64 iVal;
   int nVal;
@@ -364,6 +373,67 @@ static int SQLITE_TCLAPI read_fts3varint(
   nVal = getFts3Varint((char*)zBlob, (sqlite3_int64 *)(&iVal));
   Tcl_ObjSetVar2(interp, objv[2], 0, Tcl_NewWideIntObj(iVal), 0);
   Tcl_SetObjResult(interp, Tcl_NewIntObj(nVal));
+  return TCL_OK;
+}
+
+/*
+** USAGE:  make_fts3record ARGLIST
+*/
+static int SQLITE_TCLAPI make_fts3record(
+  void * clientData,
+  Tcl_Interp *interp,
+  int objc,
+  Tcl_Obj *CONST objv[]
+){
+  Tcl_Obj **aArg = 0;
+  Tcl_Size nArg = 0;
+  unsigned char *aOut = 0;
+  sqlite3_int64 nOut = 0;
+  sqlite3_int64 nAlloc = 0;
+  int i;
+
+  if( objc!=2 ){
+    Tcl_WrongNumArgs(interp, 1, objv, "LIST");
+    return TCL_ERROR;
+  }
+  if( Tcl_ListObjGetElements(interp, objv[1], &nArg, &aArg) ){
+    return TCL_ERROR;
+  }
+
+  for(i=0; i<(int)nArg; i++){
+    Tcl_WideInt iVal;
+    if( TCL_OK==Tcl_GetWideIntFromObj(0, aArg[i], &iVal) ){
+      if( nOut+10>nAlloc ){
+        int nNew = nAlloc?nAlloc*2:128;
+        unsigned char *aNew = sqlite3_realloc(aOut, nNew);
+        if( aNew==0 ){
+          sqlite3_free(aOut);
+          return TCL_ERROR;
+        }
+        aOut = aNew;
+        nAlloc = nNew;
+      }
+      nOut += putFts3Varint((char*)&aOut[nOut], iVal);
+    }else{
+      Tcl_Size nVal = 0;
+      char *zVal = Tcl_GetStringFromObj(aArg[i], &nVal);
+      while( (nOut + nVal)>nAlloc ){
+        sqlite3_int64 nNew = nAlloc?nAlloc*2:128;
+        unsigned char *aNew = sqlite3_realloc64(aOut, nNew);
+        if( aNew==0 ){
+          sqlite3_free(aOut);
+          return TCL_ERROR;
+        }
+        aOut = aNew;
+        nAlloc = nNew;
+      }
+      memcpy(&aOut[nOut], zVal, nVal);
+      nOut += nVal;
+    }
+  }
+
+  Tcl_SetObjResult(interp, Tcl_NewByteArrayObj(aOut, nOut));
+  sqlite3_free(aOut);
   return TCL_OK;
 }
 
@@ -383,6 +453,7 @@ int Sqlitetest_hexio_Init(Tcl_Interp *interp){
      { "hexio_render_int32",           hexio_render_int32    },
      { "utf8_to_utf8",                 utf8_to_utf8          },
      { "read_fts3varint",              read_fts3varint       },
+     { "make_fts3record",              make_fts3record       },
   };
   int i;
   for(i=0; i<sizeof(aObjCmd)/sizeof(aObjCmd[0]); i++){

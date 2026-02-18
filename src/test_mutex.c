@@ -11,12 +11,7 @@
 *************************************************************************
 ** This file contains test logic for the sqlite3_mutex interfaces.
 */
-
-#if defined(INCLUDE_SQLITE_TCL_H)
-#  include "sqlite_tcl.h"
-#else
-#  include "tcl.h"
-#endif
+#include "tclsqlite.h"
 #include "sqlite3.h"
 #include "sqliteInt.h"
 #include <stdlib.h>
@@ -30,7 +25,7 @@
 extern const char *sqlite3ErrName(int);
 
 static const char *aName[MAX_MUTEXES+1] = {
-  "fast",        "recursive",   "static_master", "static_mem",
+  "fast",        "recursive",   "static_main",   "static_mem",
   "static_open", "static_prng", "static_lru",    "static_pmem",
   "static_app1", "static_app2", "static_app3",   "static_vfs1",
   "static_vfs2", "static_vfs3", 0
@@ -45,7 +40,7 @@ struct sqlite3_mutex {
 /* State variables */
 static struct test_mutex_globals {
   int isInstalled;           /* True if installed */
-  int disableInit;           /* True to cause sqlite3_initalize() to fail */
+  int disableInit;           /* True to cause sqlite3_initialize() to fail */
   int disableTry;            /* True to force sqlite3_mutex_try() to fail */
   int isInit;                /* True if initialized */
   sqlite3_mutex_methods m;   /* Interface to "real" mutex system */

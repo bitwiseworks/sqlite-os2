@@ -288,7 +288,7 @@ do_test analyze-4.3 {
 } {}
 
 # Verify that DROP TABLE and DROP INDEX remove entries from the 
-# sqlite_stat1, sqlite_stat3 and sqlite_stat4 tables.
+# sqlite_stat1 and sqlite_stat4 tables.
 #
 do_test analyze-5.0 {
   execsql {
@@ -306,13 +306,12 @@ do_test analyze-5.0 {
     SELECT DISTINCT tbl FROM sqlite_stat1 ORDER BY 1;
   }
 } {t3i1 t3i2 t3i3 t4i1 t4i2 t3 t4}
-ifcapable stat4||stat3 {
-  ifcapable stat4 {set stat sqlite_stat4} else {set stat sqlite_stat3}
+ifcapable stat4 {
   do_test analyze-5.1 {
-    execsql "
-      SELECT DISTINCT idx FROM $stat ORDER BY 1;
-      SELECT DISTINCT tbl FROM $stat ORDER BY 1;
-    "
+    execsql {
+      SELECT DISTINCT idx FROM sqlite_stat4 ORDER BY 1;
+      SELECT DISTINCT tbl FROM sqlite_stat4 ORDER BY 1;
+    }
   } {t3i1 t3i2 t3i3 t4i1 t4i2 t3 t4}
 }
 do_test analyze-5.2 {
@@ -322,12 +321,12 @@ do_test analyze-5.2 {
     SELECT DISTINCT tbl FROM sqlite_stat1 ORDER BY 1;
   }
 } {t3i1 t3i3 t4i1 t4i2 t3 t4}
-ifcapable stat4||stat3 {
+ifcapable stat4 {
   do_test analyze-5.3 {
-    execsql "
-      SELECT DISTINCT idx FROM $stat ORDER BY 1;
-      SELECT DISTINCT tbl FROM $stat ORDER BY 1;
-    "
+    execsql {
+      SELECT DISTINCT idx FROM sqlite_stat4 ORDER BY 1;
+      SELECT DISTINCT tbl FROM sqlite_stat4 ORDER BY 1;
+    }
   } {t3i1 t3i3 t4i1 t4i2 t3 t4}
 }
 do_test analyze-5.4 {
@@ -337,12 +336,12 @@ do_test analyze-5.4 {
     SELECT DISTINCT tbl FROM sqlite_stat1 ORDER BY 1;
   }
 } {t4i1 t4i2 t4}
-ifcapable stat4||stat3 {
+ifcapable stat4 {
   do_test analyze-5.5 {
-    execsql "
-      SELECT DISTINCT idx FROM $stat ORDER BY 1;
-      SELECT DISTINCT tbl FROM $stat ORDER BY 1;
-    "
+    execsql {
+      SELECT DISTINCT idx FROM sqlite_stat4 ORDER BY 1;
+      SELECT DISTINCT tbl FROM sqlite_stat4 ORDER BY 1;
+    }
   } {t4i1 t4i2 t4}
 }
 
@@ -377,5 +376,24 @@ do_execsql_test analyze-6.1 {
   ANALYZE;
   SELECT tbl FROM sqlite_stat1 WHERE idx IS NULL ORDER BY tbl;
 } {SQLiteDemo2 sqliteDemo t1}
+
+# The following caused a small buffer overread in STAT4 processing prior
+# to check-in [b99135288b157044].
+#
+ifcapable stat4 {
+  reset_db
+  database_may_be_corrupt
+  do_execsql_test analyze-7.1 {
+    CREATE TABLE t1(a INTEGER PRIMARY KEY, b INTEGER);
+    INSERT INTO t1 VALUES(1, 7223372036854775);
+    INSERT INTO t1 VALUES(2, 7223372036854776);
+    INSERT INTO t1 VALUES(3, 7223372036854777);
+    CREATE INDEX i1 ON t1(b);
+    ANALYZE;
+    UPDATE sqlite_stat4 SET sample = substr(sample, 0, 4);
+    ANALYZE sqlite_schema;
+    SELECT * FROM t1 WHERE b>7223372036854775
+  } {2 7223372036854776 3 7223372036854777}
+}
 
 finish_test

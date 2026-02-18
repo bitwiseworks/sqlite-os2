@@ -540,6 +540,8 @@ static int fuzzerConnect(
       if( rc!=SQLITE_OK ){
         fuzzerDisconnect((sqlite3_vtab *)pNew);
         pNew = 0;
+      }else{
+        sqlite3_vtab_config(db, SQLITE_VTAB_INNOCUOUS);
       }
     }
   }
@@ -1163,6 +1165,11 @@ static sqlite3_module fuzzerModule = {
   0,                           /* xRollback */
   0,                           /* xFindMethod */
   0,                           /* xRename */
+  0,                           /* xSavepoint */
+  0,                           /* xRelease */
+  0,                           /* xRollbackTo */
+  0,                           /* xShadowName */
+  0                            /* xIntegrity */
 };
 
 #endif /* SQLITE_OMIT_VIRTUALTABLE */

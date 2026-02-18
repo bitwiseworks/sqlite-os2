@@ -15,6 +15,16 @@ if {![info exists testdir]} {
 }
 source $testdir/tester.tcl
 
+proc if_no_rbu_support {tcl} {
+  set bOk 1
+  ifcapable !rbu { set bOk 0 }
+  if {[permutation]=="journaltest"} { set bOk 0 }
+  if {$bOk==0} {
+    set c [catch {uplevel 1 $tcl} r]
+    return -code $c $r
+  } 
+}
+
 proc check_prestep_state {target state} {
   set oal_exists [file exists $target-oal]
   set wal_exists [file exists $target-wal]
@@ -89,16 +99,16 @@ proc step_rbu_legacy {target rbu} {
 proc do_rbu_vacuum_test {tn step {statedb state.db}} {
   forcedelete $statedb
   if {$statedb=="" && $step==1} breakpoint
-  uplevel [list do_test $tn.1 [string map [list %state% $statedb] {
-    if {$step==0} { sqlite3rbu_vacuum rbu test.db {%state%}}
+  uplevel [list do_test $tn.1 [string map [list %state% $statedb %step% $step] {
+    if {%step%==0} { sqlite3rbu_vacuum rbu test.db {%state%}}
     while 1 {
-      if {$step==1} { sqlite3rbu_vacuum rbu test.db {%state%}}
+      if {%step%==1} { sqlite3rbu_vacuum rbu test.db {%state%}}
       set state [rbu state]
       check_prestep_state test.db $state
       set rc [rbu step]
       check_poststep_state $rc test.db $state
       if {$rc!="SQLITE_OK"} break
-      if {$step==1} { rbu close }
+      if {%step%==1} { rbu close }
     }
     rbu close
   }] {SQLITE_DONE}]

@@ -900,6 +900,7 @@ static int amatchConnect(
     rc = amatchLoadRules(db, pNew, pzErr);
   }
   if( rc==SQLITE_OK ){
+    sqlite3_vtab_config(db, SQLITE_VTAB_INNOCUOUS);
     rc = sqlite3_declare_vtab(db,
            "CREATE TABLE x(word,distance,language,"
            "command HIDDEN,nword HIDDEN)"
@@ -1474,7 +1475,8 @@ static sqlite3_module amatchModule = {
   0,                      /* xSavepoint */
   0,                      /* xRelease */
   0,                      /* xRollbackTo */
-  0                       /* xShadowName */
+  0,                      /* xShadowName */
+  0                       /* xIntegrity */
 };
 
 #endif /* SQLITE_OMIT_VIRTUALTABLE */
