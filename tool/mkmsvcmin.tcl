@@ -23,7 +23,7 @@ if {$argc==0} {
 
 proc readFile { fileName } {
   set file_id [open $fileName RDONLY]
-  fconfigure $file_id -encoding binary -translation binary
+  fconfigure $file_id -translation binary
   set result [read $file_id]
   close $file_id
   return $result
@@ -31,7 +31,7 @@ proc readFile { fileName } {
 
 proc writeFile { fileName data } {
   set file_id [open $fileName {WRONLY CREAT TRUNC}]
-  fconfigure $file_id -encoding binary -translation binary
+  fconfigure $file_id -translation binary
   puts -nonewline $file_id $data
   close $file_id
   return ""
@@ -83,7 +83,7 @@ Replace.exe:
 sqlite3.def:	Replace.exe $(LIBOBJ)
 	echo EXPORTS > sqlite3.def
 	dumpbin /all $(LIBOBJ) \\
-		| .\Replace.exe "^\s+/EXPORT:_?(sqlite3(?:session|changeset|changegroup|rebaser)?_[^@,]*)(?:@\d+|,DATA)?$$" $$1 true \\
+		| .\Replace.exe "^\s+/EXPORT:_?(sqlite3(?:session|changeset|changegroup|rebaser|rbu)?_[^@,]*)(?:@\d+|,DATA)?$$" $$1 true \\
 		| sort >> sqlite3.def
 }]]
 
@@ -110,3 +110,4 @@ set data [string map [list " \$(ALL_TCL_TARGETS)" ""] $data]
 set data [string map [list "\$(TOP)\\src\\" "\$(TOP)\\"] $data]
 
 writeFile $toFileName $data
+puts "generated $toFileName from $fromFileName"

@@ -14,11 +14,7 @@
 ** memory allocation subsystem.
 */
 #include "sqliteInt.h"
-#if defined(INCLUDE_SQLITE_TCL_H)
-#  include "sqlite_tcl.h"
-#else
-#  include "tcl.h"
-#endif
+#include "tclsqlite.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -112,32 +108,6 @@ static void *faultsimRealloc(void *pOld, int n){
   return p;
 }
 
-/* 
-** The following method calls are passed directly through to the underlying
-** malloc system:
-**
-**     xFree
-**     xSize
-**     xRoundup
-**     xInit
-**     xShutdown
-*/
-static void faultsimFree(void *p){
-  memfault.m.xFree(p);
-}
-static int faultsimSize(void *p){
-  return memfault.m.xSize(p);
-}
-static int faultsimRoundup(int n){
-  return memfault.m.xRoundup(n);
-}
-static int faultsimInit(void *p){
-  return memfault.m.xInit(memfault.m.pAppData);
-}
-static void faultsimShutdown(void *p){
-  memfault.m.xShutdown(memfault.m.pAppData);
-}
-
 /*
 ** This routine configures the malloc failure simulation.  After
 ** calling this routine, the next nDelay mallocs will succeed, followed
@@ -204,16 +174,6 @@ static void faultsimEndBenign(void){
 ** the argument is non-zero, the 
 */
 static int faultsimInstall(int install){
-  static struct sqlite3_mem_methods m = {
-    faultsimMalloc,                   /* xMalloc */
-    faultsimFree,                     /* xFree */
-    faultsimRealloc,                  /* xRealloc */
-    faultsimSize,                     /* xSize */
-    faultsimRoundup,                  /* xRoundup */
-    faultsimInit,                     /* xInit */
-    faultsimShutdown,                 /* xShutdown */
-    0                                 /* pAppData */
-  };
   int rc;
 
   install = (install ? 1 : 0);
@@ -227,6 +187,9 @@ static int faultsimInstall(int install){
     rc = sqlite3_config(SQLITE_CONFIG_GETMALLOC, &memfault.m);
     assert(memfault.m.xMalloc);
     if( rc==SQLITE_OK ){
+      sqlite3_mem_methods m = memfault.m;
+      m.xMalloc = faultsimMalloc;
+      m.xRealloc = faultsimRealloc;
       rc = sqlite3_config(SQLITE_CONFIG_MALLOC, &m);
     }
     sqlite3_test_control(SQLITE_TESTCTRL_BENIGN_MALLOC_HOOKS, 
@@ -420,7 +383,8 @@ static int SQLITE_TCLAPI test_memset(
   Tcl_Obj *CONST objv[]
 ){
   void *p;
-  int size, n, i;
+  int size, i;
+  Tcl_Size n;
   char *zHex;
   char *zOut;
   char zBin[100];
@@ -442,7 +406,7 @@ static int SQLITE_TCLAPI test_memset(
   }
   zHex = Tcl_GetStringFromObj(objv[3], &n);
   if( n>sizeof(zBin)*2 ) n = sizeof(zBin)*2;
-  n = sqlite3TestHexToBin(zHex, n, zBin);
+  n = sqlite3TestHexToBin(zHex, (int)n, zBin);
   if( n==0 ){
     Tcl_AppendResult(interp, "no data", (char*)0);
     return TCL_ERROR;
@@ -657,7 +621,7 @@ static int SQLITE_TCLAPI test_memdebug_fail(
   if( Tcl_GetIntFromObj(interp, objv[1], &iFail) ) return TCL_ERROR;
 
   for(ii=2; ii<objc; ii+=2){
-    int nOption;
+    Tcl_Size nOption;
     char *zOption = Tcl_GetStringFromObj(objv[ii], &nOption);
     char *zErr = 0;
 

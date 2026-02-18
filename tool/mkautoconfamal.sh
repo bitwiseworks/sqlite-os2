@@ -2,8 +2,8 @@
 # This script is used to build the amalgamation autoconf package.
 # It assumes the following:
 #
-#   1. The files "sqlite3.c", "sqlite3.h" and "sqlite3ext.h"
-#      are available in the current directory.
+#   1. The files "sqlite3.c", "sqlite3.h", "sqlite3ext.h", "shell.c",
+#      and "sqlite3rc.h" are available in the current directory.
 #
 #   2. Variable $TOP is set to the full path of the root directory
 #      of the SQLite source tree.
@@ -24,6 +24,14 @@ TMPSPACE=./mkpkg_tmp_dir
 VERSION=`cat $TOP/VERSION`
 HASH=`sed 's/^\(..........\).*/\1/' $TOP/manifest.uuid`
 DATETIME=`grep '^D' $TOP/manifest | sed -e 's/[^0-9]//g' -e 's/\(............\).*/\1/'`
+
+# Verify that the version number in the TEA autoconf file is correct.
+# Fail with an error if not.
+#
+if grep $VERSION $TOP/autoconf/tea/configure.ac
+then echo "TEA version number ok"
+else echo "TEA version number mismatch.  Should be $VERSION"; exit 1
+fi
 
 # If this script is given an argument of --snapshot, then generate a
 # snapshot tarball named for the current checkout SHA1 hash, rather than
@@ -49,6 +57,7 @@ cp -R $TOP/autoconf       $TMPSPACE
 cp sqlite3.c              $TMPSPACE
 cp sqlite3.h              $TMPSPACE
 cp sqlite3ext.h           $TMPSPACE
+cp sqlite3rc.h            $TMPSPACE
 cp $TOP/sqlite3.1         $TMPSPACE
 cp $TOP/sqlite3.pc.in     $TMPSPACE
 cp shell.c                $TMPSPACE
