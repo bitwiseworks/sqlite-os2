@@ -279,5 +279,10 @@ if {$install} {
   puts "installing $DEST2/pkgIndex.tcl"
   file copy -force pkgIndex.tcl $DEST2
   puts "installing $DEST2/$OUT"
+  if {$tcl_platform(platform)!="os2"} {
   file copy -force $OUT $DEST2
+  } else {
+  # on os/2 the file is in .libs dir
+  file copy -force .libs/$OUT $DEST2
+  }
 }
