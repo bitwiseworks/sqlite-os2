@@ -78,6 +78,8 @@ if {$tcl_platform(platform)=="windows"} {
     exit 1
   }
   set OUT tclsqlite3.dll
+} elseif {$tcl_platform(platform)=="os2"} {
+  set OUT tclsqli3.dll
 } else {
   # Figure out the location of the tclConfig.sh file used by the
   # tclsh that is executing this script.
@@ -254,6 +256,8 @@ package ifneeded sqlite3 $VERSION \\
 }]
   close $fd
 
+ # on os/2 dont build again, as its already build
+ if {$tcl_platform(platform)!="os2"} {
   # Generate and execute the command with which to do the compilation.
   #
   set cmd "$CMD tclsqlite3.c -o $OUT $LIBS"
@@ -264,6 +268,7 @@ package ifneeded sqlite3 $VERSION \\
     puts $errmsg
     exit 1
   }
+ }
 }
 
 

@@ -693,6 +693,7 @@ libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
 		-rpath "$(TCLLIBDIR)" \
 		-version-info "8:6:8" \
 		-buildlevel '$(BUILDLEVEL_INFO)' \
+		-shortname tclsqli3 \
 		-avoid-version
 
 sqlite3$(TEXE):	shell.c sqlite3.c
