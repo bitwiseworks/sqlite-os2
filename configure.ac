@@ -132,7 +132,7 @@ if test x"${with_tclsh}" != x -a x"${with_tclsh}" != xnone; then
   TCLSH_CMD=${with_tclsh}
   AC_MSG_RESULT([using tclsh at "$TCLSH_CMD"])
   if test x"${use_tcl}" = "xyes"; then
-    with_tcl=`${with_tclsh} <${srcdir}/tool/find_tclconfig.tcl`
+    with_tcl=`${with_tclsh} <${srcdir}/tool/find_tclconfig.tcl | tr -d '\r\n'`
     if test x"${with_tcl}" != x; then
       AC_MSG_RESULT([$TCLSH_CMD recommends the tclConfig.sh at ${with_tcl}])
     else
