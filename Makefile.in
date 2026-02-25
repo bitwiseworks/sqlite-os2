@@ -834,7 +834,7 @@ has_tclconfig:
 	mkdir tsrc
 	cp -f $(SRC) tsrc
 	rm tsrc/sqlite.h.in tsrc/parse.y
-	$(TCLSH_CMD) $(TOP)/tool/vdbe-compress.tcl $(OPTS) <tsrc/vdbe.c >vdbe.new
+	$(TCLSH_CMD) $(TOP)/tool/vdbe-compress.tcl $(OPTS) <tsrc/vdbe.c | tr -d '\r' >vdbe.new
 	mv vdbe.new tsrc/vdbe.c
 	cp fts5.c fts5.h tsrc
 	touch .target_source
@@ -1151,10 +1151,10 @@ tclsqlite3$(TEXE):	has_tclconfig tclsqlite-shell.lo libsqlite3.la
 # Rules to build opcodes.c and opcodes.h
 #
 opcodes.c:	opcodes.h $(TOP)/tool/mkopcodec.tcl has_tclsh84
-	$(TCLSH_CMD) $(TOP)/tool/mkopcodec.tcl opcodes.h >opcodes.c
+	$(TCLSH_CMD) $(TOP)/tool/mkopcodec.tcl opcodes.h | tr -d '\r' >opcodes.c
 
 opcodes.h:	parse.h $(TOP)/src/vdbe.c $(TOP)/tool/mkopcodeh.tcl has_tclsh84
-	cat parse.h $(TOP)/src/vdbe.c | $(TCLSH_CMD) $(TOP)/tool/mkopcodeh.tcl >opcodes.h
+	cat parse.h $(TOP)/src/vdbe.c | $(TCLSH_CMD) $(TOP)/tool/mkopcodeh.tcl | tr -d '\r' >opcodes.h
 
 # Rules to build parse.c and parse.h - the outputs of lemon.
 #
