@@ -1439,13 +1439,13 @@ shelltest:
 	$(TCLSH_CMD) $(TOP)/test/testrunner.tcl release shell
 
 sqlite3_analyzer.c: sqlite3.c $(TOP)/src/tclsqlite.c $(TOP)/tool/spaceanal.tcl $(TOP)/tool/mkccode.tcl $(TOP)/tool/sqlite3_analyzer.c.in has_tclsh85
-	$(TCLSH_CMD) $(TOP)/tool/mkccode.tcl $(TOP)/tool/sqlite3_analyzer.c.in >sqlite3_analyzer.c
+	$(TCLSH_CMD) $(TOP)/tool/mkccode.tcl $(TOP)/tool/sqlite3_analyzer.c.in | tr -d '\r' >sqlite3_analyzer.c
 
 sqlite3_analyzer$(TEXE): has_tclconfig sqlite3_analyzer.c
 	$(LTLINK) sqlite3_analyzer.c -o $@ $(LIBTCL) $(TLIBS)
 
 sqltclsh.c: sqlite3.c $(TOP)/src/tclsqlite.c $(TOP)/tool/sqltclsh.tcl $(TOP)/ext/misc/appendvfs.c $(TOP)/tool/mkccode.tcl $(TOP)/tool/sqltclsh.c.in has_tclsh85
-	$(TCLSH_CMD) $(TOP)/tool/mkccode.tcl $(TOP)/tool/sqltclsh.c.in >sqltclsh.c
+	$(TCLSH_CMD) $(TOP)/tool/mkccode.tcl $(TOP)/tool/sqltclsh.c.in | tr -d '\r' >sqltclsh.c
 
 sqltclsh$(TEXE): has_tclconfig sqltclsh.c
 	$(LTLINK) sqltclsh.c -o $@ $(LIBTCL) $(TLIBS)
