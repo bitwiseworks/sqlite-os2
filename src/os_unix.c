@@ -6634,6 +6634,9 @@ static void appendOnePathElement(
     pPath->rc = SQLITE_ERROR;
     return;
   }
+#ifdef __OS2__
+  if (nName != 2 || !IS_ABSOLUTE_PATH(zName))
+#endif
   pPath->zOut[pPath->nUsed++] = '/';
   memcpy(&pPath->zOut[pPath->nUsed], zName, nName);
   pPath->nUsed += nName;
