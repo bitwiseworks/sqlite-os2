@@ -6634,7 +6634,7 @@ static void appendOnePathElement(
     pPath->rc = SQLITE_ERROR;
     return;
   }
-#ifdef __OS2__
+#if defined(SQLITE_OS_OS2)
   if (nName != 2 || !IS_ABSOLUTE_PATH(zName))
 #endif
   pPath->zOut[pPath->nUsed++] = '/';
@@ -6684,7 +6684,11 @@ static void appendAllPathElements(
   int i = 0;
   int j = 0;
   do{
+#if !defined(SQLITE_OS_OS2)
     while( zPath[i] && zPath[i]!='/' ){ i++; }
+#else
+    while( zPath[i] && zPath[i]!='/' && zPath[i]!='\\'){ i++; }
+#endif
     if( i>j ){
       appendOnePathElement(pPath, &zPath[j], i-j);
     }
